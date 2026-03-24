@@ -5,17 +5,12 @@ import os
 from collections import defaultdict
 
 # --- CONFIGURATION ---
-# Jouw externe Docker MQTT broker
 MQTT_BROKER = "192.168.101.240" 
 MQTT_PORT = 1883
 MQTT_TOPIC = "wols-ca/admin/automation_upload"
-
-# Pad naar de automatiseringen map in Home Assistant
 AUTOMATIONS_DIR = "/config/automations" 
 
-# Buffer voor grote bestanden die in delen (parts) binnenkomen
 parts_buffer = defaultdict(dict)
-# Bijhouden van geïnstalleerde versies om overbodige uploads te voorkomen
 current_versions = {}
 
 def on_message(client, userdata, msg):
@@ -32,25 +27,20 @@ def on_message(client, userdata, msg):
         parts_buffer[key][part] = data
 
         if len(parts_buffer[key]) == total_parts:
-            # Versiecontrole: alleen installeren als de versie nieuwer is
             if filename in current_versions and version <= current_versions[filename]:
                 print(f"Skipping {filename}: v{version} is not newer than v{current_versions[filename]}")
                 del parts_buffer[key]
                 return
 
-            # Bestandsdelen samenvoegen
             full_content = b''.join(parts_buffer[key][i] for i in range(1, total_parts + 1))
             content_str = full_content.decode('utf-8')
 
-            # device_id toevoegen als commentaar onderaan het YAML bestand indien afwezig
             if "device_id:" not in content_str:
                 content_str += f"\n# Automated Upload\ndevice_id: {device_id}\n"
 
-            # Map aanmaken als deze nog niet bestaat
             if not os.path.exists(AUTOMATIONS_DIR):
                 os.makedirs(AUTOMATIONS_DIR)
 
-            # Bestand wegschrijven naar de HA config map
             script_path = os.path.join(AUTOMATIONS_DIR, filename)
             with open(script_path, "w") as f:
                 f.write(content_str)
@@ -62,11 +52,9 @@ def on_message(client, userdata, msg):
     except Exception as e:
         print(f"Error processing message: {e}")
 
-# Initialiseer MQTT Client
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "wols_ca_automation_manager")
-
-# Optioneel: Gebruikersnaam/Wachtwoord instellen indien nodig
-# client.username_pw_set("GEBRUIKERSNAAM", "WACHTWOORD")
+# --- NIEUWE PAHO MQTT 2.0 SYNTAX ---
+# We voegen CallbackAPIVersion.VERSION2 toe
+client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id="wols_ca_automation_manager")
 
 print(f"Connecting to {MQTT_BROKER} on port {MQTT_PORT}...")
 try:
