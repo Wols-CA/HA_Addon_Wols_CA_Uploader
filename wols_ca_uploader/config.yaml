@@ -11,4 +11,14 @@ arch:
 startup: application
 boot: auto
 options:
-  log_level: info
+  mqtt_broker: "192.168.101.240"
+  mqtt_port: 1883
+  mqtt_user: "wols-ca-admin"
+  mqtt_password: ""
+  mqtt_topic: "wols-ca/admin/automation_upload"
+schema:
+  mqtt_broker: str
+  mqtt_port: int
+  mqtt_user: str?
+  mqtt_password: str?
+  mqtt_topic: str
