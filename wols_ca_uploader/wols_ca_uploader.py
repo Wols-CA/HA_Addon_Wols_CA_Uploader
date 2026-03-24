@@ -63,7 +63,7 @@ def on_message(client, userdata, msg):
         print(f"Error processing message: {e}")
 
 # Initialiseer MQTT Client
-client = mqtt.Client(client_id="wols_ca_automation_manager")
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, "wols_ca_automation_manager")
 
 # Optioneel: Gebruikersnaam/Wachtwoord instellen indien nodig
 # client.username_pw_set("GEBRUIKERSNAAM", "WACHTWOORD")
