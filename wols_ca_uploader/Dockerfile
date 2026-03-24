@@ -1,18 +1,18 @@
-# We gebruiken de officiële Python image in plaats van de HA-base om s6 te vermijden
+# We gebruiken een pure Python image om de s6-overlay fouten te omzeilen
 FROM python:3.12-alpine
 
-# Installeer de benodigde MQTT library
+# Installeer de benodigde MQTT bibliotheek
 RUN pip install --no-cache-dir paho-mqtt
 
-# Map aanmaken voor de app
+# Map aanmaken voor de applicatie
 WORKDIR /app
 
-# Kopieer het script
+# Kopieer je python script naar de container
 COPY wols_ca_uploader.py .
 
-# CRUCIAL: Hiermee vertellen we HA dat we GEEN s6-overlay willen gebruiken
+# Schakel s6-overlay expliciet uit voor Home Assistant
 ENV S6_SERVICES_GRACETIME=0
 ENV S6_READ_ONLY_ROOT=1
 
-# Start het script direct
+# Start het script direct als hoofdproces (PID 1)
 ENTRYPOINT ["python", "wols_ca_uploader.py"]
