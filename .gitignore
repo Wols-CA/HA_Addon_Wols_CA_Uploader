@@ -1,0 +1,17 @@
+# Ignore Visual Studio temporary files, build results, and Python cache
+.vs/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+*.env
+*.venv
+.venv/
+# Ignore OS files
+.DS_Store
+Thumbs.db
+# Ignore config and secrets (customize as needed)
+config.yaml
+secrets.yaml
