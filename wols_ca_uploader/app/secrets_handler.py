@@ -1,4 +1,10 @@
 import yaml
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
 SECRETS_FILE = "/config/secrets.yaml"  # Adjust path for your HA setup
 
@@ -8,7 +14,7 @@ def get_secret(name):
             secrets = yaml.safe_load(f)
         return secrets.get(name)
     except Exception as e:
-        print(f"Error reading secret {name}: {e}")
+        logging.info(f"Error reading secret {name}: {e}")
         return None
 
 def update_secret(name, value):
@@ -20,5 +26,5 @@ def update_secret(name, value):
             yaml.safe_dump(secrets, f)
         return True
     except Exception as e:
-        print(f"Error updating secret {name}: {e}")
+        logging.info(f"Error updating secret {name}: {e}")
         return False

@@ -2,82 +2,99 @@ import paho.mqtt.client as mqtt
 import os
 import yaml
 import json
+import logging
 
 from mqtt_triggers import handle_mqtt_message
 
-UPLOADER_VERSION = ""
-MQTT_BROKER = "localhost"  # Change as needed
-MQTT_PORT = 1883
-MQTT_USER = ""
-MQTT_PASSWORD = "" 
-MQTT_TOPIC = ""
+upLoaderVersion = ""
+mqttBroker = "localhost"  # Change as needed
+mqttPort = 1883
+mqttUser = ""
+mqttPassword = "" 
+mqttTopic = ""
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
 def get_version_from_yaml():
     version_file = "/config/version.yaml"
     with open(version_file, "r") as f:
         data = yaml.safe_load(f)
-    UPLOADER_VERSION = data.get("version", "Unknown")
+    return data.get("version", "Unknown")
 
 def get_mqtt_settings():
     config_file = "/data/options.json"
     with open(config_file, 'r') as f:
         data = json.load(f)
 
-        MQTT_BROKER = data.get("mqtt_broker", "localhost")
-        MQTT_PORT = data.get("mqtt_port", 1883)
-        MQTT_USER = data.get("mqtt_user", None)
-        MQTT_PASSWORD = data.get("mqtt_password", None)
-        MQTT_TOPIC = data.get("mqtt_topic", None)
-    printString = f"MQTT Settings - Broker: {MQTT_BROKER}, Port: {MQTT_PORT}, User: {MQTT_USER}, Topic: {MQTT_TOPIC}"
-    print(printString)
-    print
+        mqttBroker = data.get("mqttBroker", "localhost")
+        mqttPort = data.get("mqttPort", 1883)
+        mqttUser = data.get("mqttUser", None)
+        mqttPassword = data.get("mqtt_password", None)
+        mqttTopic = data.get("mqttTopic", None)
+        f.close();
+
+    printString = f"MQTT Settings - Broker: {mqttBroker}, Port: {mqttPort}, User: {mqttUser}, Topic: {mqttTopic}"
+    logging.info(printString)
+    logging.info("")
+    return mqttBroker, mqttPort, mqttUser, mqttPassword, mqttTopic
 
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code", rc)
+    logging.info("Connected with result code", rc)
     # Subscribe to all relevant topics for triggers, handshake, secrets, etc.
     client.subscribe("wols-ca/trigger/#")
     client.subscribe("wols-ca/keys/public")
     client.subscribe("wols-ca/secrets/request/#")
     client.subscribe("wols-ca/uploader/required_version")
     # After connecting to MQTT:
-    publish_version(client, UPLOADER_VERSION)
+    publish_version(client, upLoaderVersion)
     # Add more as needed
     
 
 def on_message(client, userdata, msg):
-    if not handle_mqtt_message(client, msg, UPLOADER_VERSION):
-        print(f"No handler for topic: {msg.topic}")
+    if not handle_mqtt_message(client, msg, upLoaderVersion):
+        logging.info(f"No handler for topic: {msg.topic}")
 
 def publish_version(client, version):
     client.publish("wols-ca/uploader/version", version, retain=True)
 
-def printStart():
-    get_version_from_yaml()
-    startString = f"************************************************************************************************"
+def LogStart( version, broker, port, user, password, topic):
 
-    print( str(startString))
-    print("WOLS CA Uploader - MQTT Client for Home Assistant Add-on")
-    print( str(startString))
-    print("")
+    starString = f"************************************************************************************************"
 
-    printString = f"Uploader Version: " + str(UPLOADER_VERSION)
-    print(str(printString))
-    print("")
+    logging.info( str(starString))
+    logging.info("WOLS CA Uploader - MQTT Client for Home Assistant Add-on")
+    logging.info( str(starString))
+    logging.info("")
+
+    logging.info(f"Version  : {version}")
+    logging.info("MQTT Settings:")
+    logging.info(f"  Broker : {broker}")
+    logging.info(f"  Port   : {port}")
+    logging.info(f"  User   : {user}") 
+    logging.info(f"  Topic  : {topic}")
+    logging.info("")
+    logging.info( str(starString))
+    logging.info("")
 
 
 def main():
-    
-    get_mqtt_settings()
+    uploaderVersion = get_version_from_yaml()
+    mqttBroker, mqttPort, mqttUser, mqttPassword, mqttTopic = get_mqtt_settings()
 
+    LogStart( uploaderVersion, mqttBroker, mqttPort, mqttUser, mqttPassword, mqttTopic)
+    
     client = mqtt.Client()
-    if MQTT_USER and MQTT_PASSWORD:
-        client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+    if mqttUser and mqttPassword:
+        client.username_pw_set(mqttUser, mqttPassword)
     client.on_connect = on_connect
     client.on_message = on_message
     client.reconnect_delay_set(min_delay=1, max_delay=60)  # delays in seconds
-    client.connect(MQTT_BROKER, MQTT_PORT, 60)
-    publish_version(client, UPLOADER_VERSION)
+    client.connect(mqttBroker, mqttPort, 60)
+    publish_version(client, upLoaderVersion)
     client.loop_forever()
 
 if __name__ == "__main__":
