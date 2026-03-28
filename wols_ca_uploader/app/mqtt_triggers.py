@@ -2,7 +2,7 @@ import logging
 
 from secrets_handler import get_secret, update_secret
 from public_key_handler import handle_public_key
-from packaging.version import version
+from packaging.version import parse
 
 logging.basicConfig(
     level=logging.INFO,
